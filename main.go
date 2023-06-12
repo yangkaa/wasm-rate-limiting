@@ -74,7 +74,7 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 	if relations != nil {
 		if _, ok := relations[xreq_id]; ok {
 			proxywasm.LogErrorf("relations have xreq_id [%v]", xreq_id)
-			proxywasm.AddHttpResponseHeader("app", "gray")
+			proxywasm.AddHttpRequestHeader("app", "gray")
 			return types.ActionContinue
 		}
 	}
