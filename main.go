@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"time"
 
 	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm"
@@ -16,8 +17,6 @@ type vmContext struct {
 	// so that we don't need to reimplement all the methods.
 	types.DefaultVMContext
 }
-
-var relations map[string]string
 
 // Override types.DefaultVMContext.
 func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
@@ -64,6 +63,8 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 	return types.ActionContinue
 }
 
+var relations sync.Map
+
 func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 	xreq_id, err := proxywasm.GetHttpRequestHeader("X-Request-Id")
 	if err != nil || xreq_id == "" {
@@ -71,12 +72,11 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		return types.ActionContinue
 	}
 	proxywasm.LogErrorf("ctx.pluginContext.rels is [%v]", relations)
-	if relations != nil {
-		if _, ok := relations[xreq_id]; ok {
-			proxywasm.LogErrorf("relations have xreq_id [%v]", xreq_id)
-			proxywasm.AddHttpRequestHeader("app", "gray")
-			return types.ActionContinue
-		}
+
+	if _, ok := relations.Load(xreq_id); ok {
+		proxywasm.LogErrorf("relations have xreq_id [%v]", xreq_id)
+		proxywasm.AddHttpRequestHeader("app", "gray")
+		return types.ActionContinue
 	}
 
 	gray, err := proxywasm.GetHttpRequestHeader("Gray")
@@ -85,16 +85,13 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 	}
 	proxywasm.LogErrorf("gray is [%v]", gray)
 	if gray == "true" {
-		if relations == nil {
-			relations = make(map[string]string)
-		}
-		relations[xreq_id] = gray
+		relations.Store(xreq_id, gray)
 		proxywasm.LogErrorf("relation ctx.pluginContext.rels [%v]", relations)
 	}
 
 	current := time.Now().UnixNano()
 	// We use nanoseconds() rather than time.Second() because the proxy-wasm has the known limitation.
-	// TODO(incfly): change to time.Second() once https://github.com/proxy-wasm/proxy-wasm-cpp-host/issues/199
+	// TODO: change to time.Second() once https://github.com/proxy-wasm/proxy-wasm-cpp-host/issues/199
 	// is resolved and released.
 	if current > ctx.pluginContext.lastRefillNanoSec+1e9 {
 		ctx.pluginContext.remainToken = 2
