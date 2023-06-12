@@ -62,6 +62,9 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 }
 
 func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
+	for key, value := range additionalHeaders {
+		proxywasm.AddHttpRequestHeader(key, value)
+	}
 	current := time.Now().UnixNano()
 	// We use nanoseconds() rather than time.Second() because the proxy-wasm has the known limitation.
 	// TODO(incfly): change to time.Second() once https://github.com/proxy-wasm/proxy-wasm-cpp-host/issues/199
@@ -70,7 +73,7 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		ctx.pluginContext.remainToken = 2
 		ctx.pluginContext.lastRefillNanoSec = current
 	}
-	proxywasm.LogCriticalf("Current time %v, last refill time %v, the remain token %v",
+	proxywasm.LogCriticalf("Current time %v, last ----------refill time %v, the remain token %v",
 		current, ctx.pluginContext.lastRefillNanoSec, ctx.pluginContext.remainToken)
 	if ctx.pluginContext.remainToken == 0 {
 		if err := proxywasm.SendHttpResponse(403, [][2]string{
