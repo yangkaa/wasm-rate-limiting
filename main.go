@@ -17,6 +17,8 @@ type vmContext struct {
 	types.DefaultVMContext
 }
 
+var relations map[string]string
+
 // Override types.DefaultVMContext.
 func (*vmContext) NewPluginContext(contextID uint32) types.PluginContext {
 	return &pluginContext{}
@@ -68,10 +70,10 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("Get X-Request-Id err: [%v], xreq_id [%v]", err, xreq_id)
 		return types.ActionContinue
 	}
-	proxywasm.LogErrorf("ctx.pluginContext.rels is [%v]", ctx.pluginContext.rels)
-	if ctx.pluginContext.rels != nil {
-		if _, ok := ctx.pluginContext.rels[xreq_id]; ok {
-			proxywasm.LogErrorf("ctx.pluginContext.rels have xreq_id [%v]", xreq_id)
+	proxywasm.LogErrorf("ctx.pluginContext.rels is [%v]", relations)
+	if relations != nil {
+		if _, ok := relations[xreq_id]; ok {
+			proxywasm.LogErrorf("relations have xreq_id [%v]", xreq_id)
 			proxywasm.AddHttpResponseHeader("app", "gray")
 			return types.ActionContinue
 		}
@@ -83,11 +85,11 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 	}
 	proxywasm.LogErrorf("gray is [%v]", gray)
 	if gray == "true" {
-		if ctx.pluginContext.rels == nil {
-			ctx.pluginContext.rels = make(map[string]string)
+		if relations == nil {
+			relations = make(map[string]string)
 		}
-		ctx.pluginContext.rels[xreq_id] = gray
-		proxywasm.LogErrorf("tx.pluginContext.rels [%v]", ctx.pluginContext.rels)
+		relations[xreq_id] = gray
+		proxywasm.LogErrorf("relation ctx.pluginContext.rels [%v]", relations)
 	}
 
 	current := time.Now().UnixNano()
