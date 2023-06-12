@@ -68,14 +68,19 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("Get X-Request-Id err: [%v], xreq_id [%v]", err, xreq_id)
 		return types.ActionContinue
 	}
-	if _, ok := ctx.pluginContext.rels[xreq_id]; ok {
-		proxywasm.LogInfof("ctx.pluginContext.rels have xreq_id [%v]", xreq_id)
-		proxywasm.AddHttpResponseHeader("app", "gray")
-		return types.ActionContinue
+	proxywasm.LogInfof("ctx.pluginContext.rels is [%v]", ctx.pluginContext.rels)
+	if ctx.pluginContext.rels != nil {
+		if _, ok := ctx.pluginContext.rels[xreq_id]; ok {
+			proxywasm.LogInfof("ctx.pluginContext.rels have xreq_id [%v]", xreq_id)
+			proxywasm.AddHttpResponseHeader("app", "gray")
+			return types.ActionContinue
+		}
 	}
+	trace, _ := proxywasm.GetHttpRequestHeader("X-B3-Traceid")
+	proxywasm.LogInfof("X-B3-Traceid is [%v]", trace)
 	gray, err := proxywasm.GetHttpRequestHeader("X-Forwarded-Host")
 	if err != nil || gray == "" {
-		proxywasm.LogErrorf("Get X-Forwarded-Host err: [%v], host [%v]", err, gray)
+		proxywasm.LogErrorf("Get X-Forwarded-Host err 5: [%v], host [%v]", err, gray)
 		return types.ActionContinue
 	}
 	proxywasm.LogInfof("gray is [%v]", gray)
