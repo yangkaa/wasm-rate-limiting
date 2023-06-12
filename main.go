@@ -75,7 +75,7 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("proxywasm.GetSharedData(xreq_id) err [%v]", err)
 	} else {
 		proxywasm.LogErrorf("proxywasm.GetSharedData have xreq_id(%v) data is [%v]", xreq_id, data)
-		proxywasm.AddHttpRequestHeader("app", "gray")
+		proxywasm.AddHttpRequestHeader("Gray", "true")
 		return types.ActionContinue
 	}
 
