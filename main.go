@@ -33,6 +33,7 @@ type pluginContext struct {
 	// NOTE(jianfeih): any concerns about the threading and mutex usage for tinygo wasm?
 	// the last time the token is refilled with `requestPerSecond`.
 	lastRefillNanoSec int64
+	rels              map[string]string
 }
 
 // Override types.DefaultPluginContext.
@@ -62,9 +63,29 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 }
 
 func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
-	for key, value := range additionalHeaders {
-		proxywasm.AddHttpRequestHeader(key, value)
+	xreq_id, err := proxywasm.GetHttpRequestHeader("X-Request-Id")
+	if err != nil || xreq_id == "" {
+		proxywasm.LogErrorf("Get X-Request-Id err: [%v], xreq_id [%v]", err, xreq_id)
+		return types.ActionContinue
 	}
+	gray, err := proxywasm.GetHttpRequestHeader("X-Forwarded-Host")
+	if err != nil || gray == "" {
+		proxywasm.LogErrorf("Get X-Forwarded-Host err: [%v], host [%v]", err, gray)
+		return types.ActionContinue
+	}
+	if _, ok := ctx.pluginContext.rels[xreq_id]; ok {
+		proxywasm.LogInfof("ctx.pluginContext.rels have xreq_id [%v]", xreq_id)
+		proxywasm.AddHttpResponseHeader("app", "gray")
+		return types.ActionContinue
+	}
+	if gray == "8080.gra909e7.zqtiyxva.42fb43.grapps.cn" {
+		if ctx.pluginContext.rels == nil {
+			ctx.pluginContext.rels = make(map[string]string)
+		}
+		ctx.pluginContext.rels[xreq_id] = gray
+		proxywasm.LogInfof("tx.pluginContext.rels [%v]", ctx.pluginContext.rels)
+	}
+
 	current := time.Now().UnixNano()
 	// We use nanoseconds() rather than time.Second() because the proxy-wasm has the known limitation.
 	// TODO(incfly): change to time.Second() once https://github.com/proxy-wasm/proxy-wasm-cpp-host/issues/199
