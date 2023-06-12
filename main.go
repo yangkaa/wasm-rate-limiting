@@ -68,28 +68,28 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("Get X-Request-Id err: [%v], xreq_id [%v]", err, xreq_id)
 		return types.ActionContinue
 	}
-	proxywasm.LogInfof("ctx.pluginContext.rels is [%v]", ctx.pluginContext.rels)
+	proxywasm.LogErrorf("ctx.pluginContext.rels is [%v]", ctx.pluginContext.rels)
 	if ctx.pluginContext.rels != nil {
 		if _, ok := ctx.pluginContext.rels[xreq_id]; ok {
-			proxywasm.LogInfof("ctx.pluginContext.rels have xreq_id [%v]", xreq_id)
+			proxywasm.LogErrorf("ctx.pluginContext.rels have xreq_id [%v]", xreq_id)
 			proxywasm.AddHttpResponseHeader("app", "gray")
 			return types.ActionContinue
 		}
 	}
 	trace, _ := proxywasm.GetHttpRequestHeader("X-B3-Traceid")
-	proxywasm.LogInfof("X-B3-Traceid is [%v]", trace)
+	proxywasm.LogErrorf("X-B3-Traceid is [%v]", trace)
 	gray, err := proxywasm.GetHttpRequestHeader("X-Forwarded-Host")
 	if err != nil || gray == "" {
 		proxywasm.LogErrorf("Get X-Forwarded-Host err 5: [%v], host [%v]", err, gray)
 		return types.ActionContinue
 	}
-	proxywasm.LogInfof("gray is [%v]", gray)
+	proxywasm.LogErrorf("gray is [%v]", gray)
 	if gray == "8080.gra909e7.zqtiyxva.42fb43.grapps.cn" {
 		if ctx.pluginContext.rels == nil {
 			ctx.pluginContext.rels = make(map[string]string)
 		}
 		ctx.pluginContext.rels[xreq_id] = gray
-		proxywasm.LogInfof("tx.pluginContext.rels [%v]", ctx.pluginContext.rels)
+		proxywasm.LogErrorf("tx.pluginContext.rels [%v]", ctx.pluginContext.rels)
 	}
 
 	current := time.Now().UnixNano()
