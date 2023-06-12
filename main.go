@@ -76,15 +76,13 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 			return types.ActionContinue
 		}
 	}
-	trace, _ := proxywasm.GetHttpRequestHeader("X-B3-Traceid")
-	proxywasm.LogErrorf("X-B3-Traceid is [%v]", trace)
-	gray, err := proxywasm.GetHttpRequestHeader("X-Forwarded-Host")
+
+	gray, err := proxywasm.GetHttpRequestHeader("Gray")
 	if err != nil || gray == "" {
 		proxywasm.LogErrorf("Get X-Forwarded-Host err 5: [%v], host [%v]", err, gray)
-		return types.ActionContinue
 	}
 	proxywasm.LogErrorf("gray is [%v]", gray)
-	if gray == "8080.gra909e7.zqtiyxva.42fb43.grapps.cn" {
+	if gray == "true" {
 		if ctx.pluginContext.rels == nil {
 			ctx.pluginContext.rels = make(map[string]string)
 		}
