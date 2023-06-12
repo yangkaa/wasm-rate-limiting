@@ -78,6 +78,7 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("Get X-Forwarded-Host err: [%v], host [%v]", err, gray)
 		return types.ActionContinue
 	}
+	proxywasm.LogInfof("gray is [%v]", gray)
 	if gray == "8080.gra909e7.zqtiyxva.42fb43.grapps.cn" {
 		if ctx.pluginContext.rels == nil {
 			ctx.pluginContext.rels = make(map[string]string)
