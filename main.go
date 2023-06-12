@@ -1,7 +1,6 @@
 package main
 
 import (
-	"sync"
 	"time"
 
 	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm"
@@ -63,7 +62,7 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 	return types.ActionContinue
 }
 
-var relations sync.Map
+//var relations sync.Map
 
 func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 	xreq_id, err := proxywasm.GetHttpRequestHeader("X-Request-Id")
@@ -71,10 +70,11 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("Get X-Request-Id err: [%v], xreq_id [%v]", err, xreq_id)
 		return types.ActionContinue
 	}
-	proxywasm.LogErrorf("ctx.pluginContext.rels is [%v]", relations)
-
-	if _, ok := relations.Load(xreq_id); ok {
-		proxywasm.LogErrorf("relations have xreq_id [%v]", xreq_id)
+	data, cas, err := proxywasm.GetSharedData(xreq_id)
+	if err != nil {
+		proxywasm.LogErrorf("proxywasm.GetSharedData(xreq_id) err [%v]", err)
+	} else {
+		proxywasm.LogErrorf("proxywasm.GetSharedData have xreq_id(%v) data is [%v]", xreq_id, data)
 		proxywasm.AddHttpRequestHeader("app", "gray")
 		return types.ActionContinue
 	}
@@ -85,8 +85,11 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 	}
 	proxywasm.LogErrorf("gray is [%v]", gray)
 	if gray == "true" {
-		relations.Store(xreq_id, gray)
-		proxywasm.LogErrorf("relation ctx.pluginContext.rels [%v]", relations)
+		err := proxywasm.SetSharedData(xreq_id, []byte(gray), cas)
+		if err != nil {
+			proxywasm.LogErrorf("proxywasm.SetSharedData error [%v]", err)
+		}
+		proxywasm.LogErrorf("proxywasm.SetSharedData xreq_id [%v]", xreq_id)
 	}
 
 	current := time.Now().UnixNano()
