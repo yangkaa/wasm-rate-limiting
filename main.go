@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm"
 	"github.com/tetratelabs/proxy-wasm-go-sdk/proxywasm/types"
 )
@@ -92,25 +90,25 @@ func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
 		proxywasm.LogErrorf("proxywasm.SetSharedData xreq_id [%v]", xreq_id)
 	}
 
-	current := time.Now().UnixNano()
+	//current := time.Now().UnixNano()
 	// We use nanoseconds() rather than time.Second() because the proxy-wasm has the known limitation.
 	// TODO: change to time.Second() once https://github.com/proxy-wasm/proxy-wasm-cpp-host/issues/199
 	// is resolved and released.
-	if current > ctx.pluginContext.lastRefillNanoSec+1e9 {
-		ctx.pluginContext.remainToken = 2
-		ctx.pluginContext.lastRefillNanoSec = current
-	}
-	proxywasm.LogCriticalf("Current time %v, last ----------refill time %v, the remain token %v",
-		current, ctx.pluginContext.lastRefillNanoSec, ctx.pluginContext.remainToken)
-	if ctx.pluginContext.remainToken == 0 {
-		if err := proxywasm.SendHttpResponse(403, [][2]string{
-			{"powered-by", "proxy-wasm-go-sdk!!"},
-		}, []byte("rate limited, wait and retry."), -1); err != nil {
-			proxywasm.LogErrorf("failed to send local response: %v", err)
-			proxywasm.ResumeHttpRequest()
-		}
-		return types.ActionPause
-	}
-	ctx.pluginContext.remainToken -= 1
+	//if current > ctx.pluginContext.lastRefillNanoSec+1e9 {
+	//	ctx.pluginContext.remainToken = 2
+	//	ctx.pluginContext.lastRefillNanoSec = current
+	//}
+	//proxywasm.LogCriticalf("Current time %v, last ----------refill time %v, the remain token %v",
+	//	current, ctx.pluginContext.lastRefillNanoSec, ctx.pluginContext.remainToken)
+	//if ctx.pluginContext.remainToken == 0 {
+	//	if err := proxywasm.SendHttpResponse(403, [][2]string{
+	//		{"powered-by", "proxy-wasm-go-sdk!!"},
+	//	}, []byte("rate limited, wait and retry."), -1); err != nil {
+	//		proxywasm.LogErrorf("failed to send local response: %v", err)
+	//		proxywasm.ResumeHttpRequest()
+	//	}
+	//	return types.ActionPause
+	//}
+	//ctx.pluginContext.remainToken -= 1
 	return types.ActionContinue
 }
