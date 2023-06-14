@@ -63,9 +63,9 @@ func (ctx *httpHeaders) OnHttpResponseHeaders(numHeaders int, endOfStream bool) 
 //var relations sync.Map
 
 func (ctx *httpHeaders) OnHttpRequestHeaders(int, bool) types.Action {
-	xreq_id, err := proxywasm.GetHttpRequestHeader("X-Request-Id")
+	xreq_id, err := proxywasm.GetHttpRequestHeader("X-B3-Traceid")
 	if err != nil || xreq_id == "" {
-		proxywasm.LogErrorf("Get X-Request-Id err: [%v], xreq_id [%v]", err, xreq_id)
+		proxywasm.LogErrorf("Get X-B3-Traceid err: [%v], xreq_id [%v]", err, xreq_id)
 		return types.ActionContinue
 	}
 	data, cas, err := proxywasm.GetSharedData(xreq_id)
